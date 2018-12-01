@@ -372,4 +372,4 @@
                :migration     migrations/v26}
               {:schema        v27
                :schemaVersion 27
-               :migration     migrations/v26}])
+               :migration     migrations/v27}])
