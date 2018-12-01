@@ -3,6 +3,9 @@
             [cljs.reader :as reader]
             [status-im.chat.models.message-content :as message-content]
             [status-im.transport.utils :as transport.utils]
+            [cljs.tools.reader.edn :as edn]
+            [status-im.js-dependencies :as dependencies]
+            [clojure.string :as string]
             [cljs.tools.reader.edn :as edn]))
 
 (defn v1 [old-realm new-realm]
@@ -240,3 +243,33 @@
                                                     "status = \"received\""))
                                     (.-length))]
         (aset chat "unviewed-messages-count" user-statuses-count)))))
+
+(defrecord Message [content content-type message-type clock-value timestamp])
+
+(defn sha3 [s]
+  (.sha3 dependencies/Web3.prototype s))
+
+(defn replace-ns [str-message]
+  (string/replace-first
+   str-message
+   "status-im.data-store.realm.schemas.account.migrations"
+   "status-im.transport.message.protocol"))
+
+(defn old-message-id
+  [message]
+  (sha3 (replace-ns (pr-str message))))
+
+;; TODO (rasom): add migration for response-to before merging
+(defn v27 [old-realm new-realm]
+  (let [messages (.objects new-realm "message")]
+    (dotimes [i (.-length messages)]
+      (let [js-message     (aget messages i)
+            message        {:content      (edn/read-string
+                                           (aget js-message "content"))
+                            :content-type (aget js-message "content-type")
+                            :message-type (aget js-message "message-type")
+                            :clock-value  (aget js-message "clock-value")
+                            :timestamp    (aget js-message "timestamp")}
+            message-record (map->Message message)
+            old-message-id (old-message-id message-record)]
+        (aset message "old-message-id" old-message-id)))))

@@ -263,4 +263,6 @@
  :chats/reply-message
  :<- [:chats/current-chat]
  (fn [{:keys [metadata messages]}]
-   (get messages (:responding-to-message metadata))))
+   (get messages (get-in metadata [:responding-to-message :message-id]))))
+;; "0x89957b18854848acb520c35561725ae457ada9c5b7f89fedb3b4b1d84fc33a86"
+

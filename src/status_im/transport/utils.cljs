@@ -17,6 +17,10 @@
 (defn sha3 [s]
   (.sha3 dependencies/Web3.prototype s))
 
+(defn old-message-id
+  [message]
+  (sha3 (pr-str message)))
+
 (defn message-id
   "Get a message-id"
   [{:keys [from chat-id clock-value] :as m}]

@@ -163,10 +163,17 @@
                                               :to    chat-id
                                               :from  from}}))))
 
+(defn check-response-to
+  [{{:keys [response-to response-to-new]} :content :as message}]
+  (if (and response-to (not response-to-new))
+    (let [response-to-new (messages-store/get-message-id-by-old response-to)]
+      (assoc-in message [:content :response-to-new] response-to-new))
+    message))
+
 (fx/defn add-received-message
   [{:keys [db now] :as cofx}
    batch?
-   {:keys [from message-id chat-id js-obj] :as raw-message}]
+   {:keys [from message-id chat-id js-obj content] :as raw-message}]
   (let [{:keys [web3 current-chat-id view-id]} db
         current-public-key            (accounts.db/current-public-key cofx)
         current-chat?                 (and (or (= :chat view-id)
@@ -176,6 +183,7 @@
         message                       (-> raw-message
                                           (commands-receiving/enhance-receive-parameters cofx)
                                           (ensure-clock-value chat)
+                                          (check-response-to)
                                           ;; TODO (cammellos): Refactor so it's not computed twice
                                           (add-outgoing-status current-public-key))]
     (fx/merge cofx
@@ -248,7 +256,8 @@
 
 (fx/defn receive-many
   [{:keys [now] :as cofx} messages]
-  (let [valid-messages   (keep #(when-let [chat-id (extract-chat-id cofx %)] (assoc % :chat-id chat-id)) messages)
+  (let [valid-messages   (keep #(when-let [chat-id (extract-chat-id cofx %)]
+                                  (assoc % :chat-id chat-id)) messages)
         deduped-messages (filter-messages cofx valid-messages)
         chat->message    (group-by :chat-id deduped-messages)
         chat-ids         (keys chat->message)
@@ -313,8 +322,11 @@
 
 (fx/defn upsert-and-send [{:keys [now] :as cofx} {:keys [chat-id] :as message}]
   (let [send-record     (protocol/map->Message (select-keys message transport-keys))
+        old-message-id  (transport.utils/old-message-id send-record)
         message-id      (transport.utils/message-id message)
-        message-with-id (assoc message :message-id message-id)]
+        message-with-id (assoc message
+                               :message-id message-id
+                               :old-message-id old-message-id)]
 
     (fx/merge cofx
               (chat-model/upsert-chat {:chat-id chat-id
