@@ -24,8 +24,6 @@
 (defn message-id
   "Get a message-id"
   [{:keys [from chat-id clock-value] :as m}]
-  {:pre [(not (nil? from))
-         (not (nil? chat-id))]}
   (sha3 (str from chat-id clock-value)))
 
 (defn get-topic
