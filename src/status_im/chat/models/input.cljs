@@ -131,7 +131,7 @@
                                             :content-type constants/content-type-text
                                             :content      (cond-> {:chat-id current-chat-id
                                                                    :text    input-text}
-                                                            reply-to-message
+                                                            message-id
                                                             (assoc :response-to old-message-id
                                                                    :response-to-new message-id))})
                 (commands.input/set-command-reference nil)
