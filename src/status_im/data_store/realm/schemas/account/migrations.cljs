@@ -175,7 +175,7 @@
       (let [message (aget new-messages i)
             message-id (aget message "message-id")
             from (aget message "from")
-            chat-id (aget message "chat-id")
+            chat-id (:chat-id (edn/read-string (aget message "content")))
             clock-value (aget message "clock-value")
             new-message-id (transport.utils/message-id
                             {:from        from
