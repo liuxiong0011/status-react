@@ -267,9 +267,10 @@
             message        {:content      (edn/read-string
                                            (aget js-message "content"))
                             :content-type (aget js-message "content-type")
-                            :message-type (aget js-message "message-type")
+                            :message-type (keyword
+                                           (aget js-message "message-type"))
                             :clock-value  (aget js-message "clock-value")
                             :timestamp    (aget js-message "timestamp")}
             message-record (map->Message message)
             old-message-id (old-message-id message-record)]
-        (aset message "old-message-id" old-message-id)))))
+        (aset js-message "old-message-id" old-message-id)))))
